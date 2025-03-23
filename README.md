@@ -1,2 +1,2 @@
-# Arachnid
- Игра про паука
+# Spider
+Unity 2D spider game.
