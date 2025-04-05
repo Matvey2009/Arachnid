@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      10240_Office_Desk_v2_Diffuse_0: 1397032367551270484
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
