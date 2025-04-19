@@ -11,12 +11,6 @@ public class SpiderController : MonoBehaviour
     {
         // Получаем ссылку на компонент Animator
         animator = GetComponent<Animator>();
-
-        // Проверяем, что Animator существует
-        if (animator == null)
-        {
-            Debug.LogError("Animator component not found on the Spider!");
-        }
     }
 
     void Update()
