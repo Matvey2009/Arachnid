@@ -9,17 +9,28 @@ public class SaggingLineDrawer : MonoBehaviour
     public Color lineColor = Color.green;
     public Color invalidLineColor = Color.red;
     public LayerMask obstacleLayer;
-    public float sagAmount = 1.0f; // Сила провисания
-    public int resolution = 10;    // Количество сегментов линии
+    public float sagAmount = 1.0f;
+    public int resolution = 10;
     
     private List<GameObject> lineObjects = new List<GameObject>();
     private Vector3? firstPoint = null;
     private LineRenderer previewLine;
     private bool isValidPlacement = true;
+    private GameObject webContainer; // Родительский объект для всех паутинок
 
     void Start()
     {
         CreatePreviewLine();
+        CreateWebContainer();
+    }
+
+    void CreateWebContainer()
+    {
+        // Создаем контейнер если его нет
+        if (webContainer == null)
+        {
+            webContainer = new GameObject("WebContainer");
+        }
     }
 
     void Update()
@@ -83,6 +94,10 @@ public class SaggingLineDrawer : MonoBehaviour
     void CreateSaggingLine(Vector3 start, Vector3 end)
     {
         GameObject lineObj = new GameObject("SaggingLine");
+        
+        // Помещаем новую паутинку в контейнер
+        lineObj.transform.SetParent(webContainer.transform);
+        
         LineRenderer lr = lineObj.AddComponent<LineRenderer>();
         lineObjects.Add(lineObj);
         
@@ -110,7 +125,6 @@ public class SaggingLineDrawer : MonoBehaviour
             float t = i / (float)(resolution - 1);
             Vector3 point = Vector3.Lerp(start, end, t);
             
-            // Добавляем провисание по параболе
             float sagFactor = Mathf.Sin(t * Mathf.PI);
             point.y -= sagFactor * sagAmount;
             
@@ -133,10 +147,15 @@ public class SaggingLineDrawer : MonoBehaviour
 
     void ClearAllLines()
     {
+        // Уничтожаем все паутинки и контейнер
         foreach (GameObject line in lineObjects)
         {
             Destroy(line);
         }
         lineObjects.Clear();
+        
+        // Пересоздаем чистый контейнер
+        if (webContainer != null) Destroy(webContainer);
+        CreateWebContainer();
     }
-}   
+}
