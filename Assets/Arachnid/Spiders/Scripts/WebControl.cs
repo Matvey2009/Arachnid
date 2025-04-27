@@ -5,19 +5,29 @@ public class WebControl : MonoBehaviour
     public GameObject webAnchorPrefab;
     public GameObject webLinePrefab;
     public float webLineWidth = 0.05f;
-    public int lineResolution = 10; // Количество сегментов линии
-    public float sagAmount = 1f;    // Сила провисания
-    public float webStartOffset = 10f; // Смещение начала паутины от центра паука
+    public int lineResolution = 10;
+    public float sagAmount = 1f;
+    public float webStartOffset = 10f;
+    
+    [Header("Resource Settings")]
+    public int maxSpiderSilk = 100; // Максимальное количество ресурса
+    public int webCost = 20;        // Стоимость одной паутины
+    private int currentSpiderSilk;  // Текущее количество ресурса
 
     private LineRenderer _currentWebLine;
     private GameObject _currentWebAnchor;
     private bool _isFirstWebCreated = false;
 
+    void Start()
+    {
+        currentSpiderSilk = maxSpiderSilk; // Инициализируем с максимальным запасом
+    }
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
-            CreateWeb();
+            TryCreateWeb();
         }
 
         if (_isFirstWebCreated && _currentWebLine != null && _currentWebAnchor != null)
@@ -26,46 +36,60 @@ public class WebControl : MonoBehaviour
         }
     }
 
+    void TryCreateWeb()
+    {
+        // Проверяем, достаточно ли ресурса
+        if (currentSpiderSilk >= webCost)
+        {
+            CreateWeb();
+            currentSpiderSilk -= webCost;
+            Debug.Log($"Паутина создана! Осталось шелка: {currentSpiderSilk}/{maxSpiderSilk}");
+        }
+        else
+        {
+            Debug.LogWarning($"Недостаточно шелка! Нужно: {webCost}, есть: {currentSpiderSilk}");
+        }
+    }
+
     void CreateWeb()
     {
-        // Создаем якорь паутины в текущей позиции паука
         GameObject anchor = Instantiate(webAnchorPrefab, transform.position, Quaternion.identity);
 
-        // Если это первая паутина
         if (!_isFirstWebCreated)
         {
-            // Сохраняем якорь и создаем линию паутины
             _currentWebAnchor = anchor;
             _currentWebLine = Instantiate(webLinePrefab).GetComponent<LineRenderer>();
             _currentWebLine.startWidth = webLineWidth;
             _currentWebLine.endWidth = webLineWidth;
-            _currentWebLine.positionCount = lineResolution + 1; // Устанавливаем количество точек
+            _currentWebLine.positionCount = lineResolution + 1;
 
-            UpdateWebLine(); // Вызываем UpdateWebLine сразу после создания
-            _isFirstWebCreated = true; // отмечаем, что первая паутина создана
+            UpdateWebLine();
+            _isFirstWebCreated = true;
         }
         else
         {
-            // Если это вторая паутина, создаем только якорь
-            // Останавливаем обновление линии первой паутины, отсоединяя её от паука
             _currentWebLine = null;
             _currentWebAnchor = null;
             _isFirstWebCreated = false;
         }
     }
 
-    // Обновляем линию паутины между пауком и якорем
+    // Метод для пополнения ресурса (можно вызывать из других скриптов)
+    public void AddSpiderSilk(int amount)
+    {
+        currentSpiderSilk = Mathf.Min(currentSpiderSilk + amount, maxSpiderSilk);
+        Debug.Log($"Шелк пополнен! Теперь: {currentSpiderSilk}/{maxSpiderSilk}");
+    }
+
     void UpdateWebLine()
     {
         if (_currentWebLine != null && _currentWebAnchor != null)
         {
-            // Определяем точки кривой Безье
-            Vector3 startPoint = transform.TransformPoint(new Vector3(0, 2*webStartOffset, 2*webStartOffset)); // webStartOffset по оси YZ
+            Vector3 startPoint = transform.TransformPoint(new Vector3(0, 2*webStartOffset, 2*webStartOffset));
             Vector3 endPoint = _currentWebAnchor.transform.position;
-            Vector3 controlPoint = (startPoint + endPoint) * 0.5f;  // Середина между точками
-            controlPoint.y -= sagAmount; // Смещаем контрольную точку вниз для создания провисания
+            Vector3 controlPoint = (startPoint + endPoint) * 0.5f;
+            controlPoint.y -= sagAmount;
 
-            // Заполняем LineRenderer точками кривой Безье
             for (int i = 0; i <= lineResolution; i++)
             {
                 float t = (float)i / lineResolution;
@@ -75,7 +99,6 @@ public class WebControl : MonoBehaviour
         }
     }
 
-    // Функция для вычисления точки на кривой Безье
     Vector3 CalculateBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2)
     {
         float u = 1 - t;
